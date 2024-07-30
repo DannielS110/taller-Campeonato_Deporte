@@ -4,11 +4,6 @@
  */
 package futbolligasystem;
 
-/**
- *
- * @author Dannn
- */
-
 import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
@@ -38,7 +33,10 @@ public class Campeonato {
     }
 
     public void generarTablaPosiciones() {
-        // Implementación para generar la tabla de posiciones
+        for (Partido partido : partidos) {
+            tablaPosiciones.actualizarTabla(partido);
+        }
+        System.out.println("Tabla de posiciones generada para el campeonato " + this.nombre);
     }
 
     public String getNombre() {
@@ -95,5 +93,14 @@ public class Campeonato {
 
     public void setTablaPosiciones(TablaPosiciones tablaPosiciones) {
         this.tablaPosiciones = tablaPosiciones;
+    }
+
+    public void agregarEquipoInscrito(EquipoInscrito equipoInscrito) {
+        this.equiposInscritos.add(equipoInscrito);
+    }
+
+    public void agregarPartido(Partido partido) {
+        this.partidos.add(partido);
+        this.tablaPosiciones.actualizarTabla(partido);
     }
 }

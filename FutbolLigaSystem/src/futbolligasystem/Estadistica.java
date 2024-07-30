@@ -1,13 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package futbolligasystem;
-
-/**
- *
- * @author Dannn
- */
 
 import java.util.List;
 import java.util.ArrayList;
@@ -20,19 +11,55 @@ public class Estadistica {
     private int partidosPerdidos;
     private int golesFavor;
     private int golesContra;
+    private int puntos;
     private List<ResultadoPartido> resultados;
 
     public Estadistica(EquipoInscrito equipoInscrito) {
         this.equipoInscrito = equipoInscrito;
+        this.partidosJugados = 0;
+        this.partidosGanados = 0;
+        this.partidosEmpatados = 0;
+        this.partidosPerdidos = 0;
+        this.golesFavor = 0;
+        this.golesContra = 0;
+        this.puntos = 0;
         this.resultados = new ArrayList<>();
     }
 
     public void actualizarEstadisticas(Partido partido) {
-        // Implementación para actualizar estadísticas
-    }
+        partidosJugados++;
 
-    public int calcularPuntos() {
-        return (partidosGanados * 3) + partidosEmpatados;
+        int golesAFavor, golesEnContra;
+        ResultadoPartido resultado;
+
+        if (partido.getEquipoLocal().equals(this.equipoInscrito)) {
+            golesAFavor = partido.getGolesLocal();
+            golesEnContra = partido.getGolesVisitante();
+            resultado = partido.obtenerResultado(this.equipoInscrito);
+        } else {
+            golesAFavor = partido.getGolesVisitante();
+            golesEnContra = partido.getGolesLocal();
+            resultado = partido.obtenerResultado(this.equipoInscrito);
+        }
+
+        golesFavor += golesAFavor;
+        golesContra += golesEnContra;
+
+        switch (resultado) {
+            case GANADO:
+                partidosGanados++;
+                puntos += 3;
+                break;
+            case EMPATADO:
+                partidosEmpatados++;
+                puntos += 1;
+                break;
+            case PERDIDO:
+                partidosPerdidos++;
+                break;
+        }
+
+        resultados.add(resultado);
     }
 
     public EquipoInscrito getEquipoInscrito() {
@@ -89,6 +116,14 @@ public class Estadistica {
 
     public void setGolesContra(int golesContra) {
         this.golesContra = golesContra;
+    }
+
+    public int getPuntos() {
+        return puntos;
+    }
+
+    public void setPuntos(int puntos) {
+        this.puntos = puntos;
     }
 
     public List<ResultadoPartido> getResultados() {
