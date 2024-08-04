@@ -1,18 +1,17 @@
 package futbolligasystem;
 
-import java.util.Date;
-import java.util.Scanner;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Scanner;
 
 public class FutbolLigaSystem {
     private static Scanner scanner = new Scanner(System.in);
-    private static Campeonato campeonato;
+    private static List<Campeonato> campeonatos = new ArrayList<>();
     private static Administrador admin;
 
     public static void main(String[] args) {
-        inicializarCampeonato();
-        registrarEquiposIniciales();
+        inicializarSistema();
 
         boolean salir = false;
         while (!salir) {
@@ -22,15 +21,18 @@ public class FutbolLigaSystem {
 
             switch (opcion) {
                 case 1:
-                    inscribirNuevoEquipo();
+                    crearCampeonato();
                     break;
                 case 2:
-                    registrarResultadoPartido();
+                    inscribirEquipo();
                     break;
                 case 3:
-                    verTablaPosiciones();
+                    registrarResultadoPartido();
                     break;
                 case 4:
+                    verTablaPosiciones();
+                    break;
+                case 5:
                     salir = true;
                     break;
                 default:
@@ -38,119 +40,147 @@ public class FutbolLigaSystem {
             }
         }
 
+        System.out.println("Gracias por usar el sistema de gestión de campeonatos.");
         scanner.close();
     }
 
-    private static void inicializarCampeonato() {
+    private static void inicializarSistema() {
+        System.out.println("Bienvenido al Sistema de Gestión de Campeonatos de Fútbol");
         System.out.println("Ingrese el nombre del administrador:");
         String nombreAdmin = scanner.nextLine();
         System.out.println("Ingrese el email del administrador:");
         String emailAdmin = scanner.nextLine();
         admin = new Administrador(nombreAdmin, emailAdmin);
-
-        System.out.println("Ingrese el nombre del campeonato:");
-        String nombreCampeonato = scanner.nextLine();
-        campeonato = admin.crearCampeonato(nombreCampeonato, new Date(), new Date(), TipoCampeonato.LIGA);
-    }
-
-    private static void registrarEquiposIniciales() {
-        System.out.println("Ingrese la cantidad de equipos que participarán inicialmente en el campeonato:");
-        int cantidadEquipos = scanner.nextInt();
-        scanner.nextLine(); // Consumir el salto de línea
-
-        for (int i = 1; i <= cantidadEquipos; i++) {
-            inscribirEquipo();
-        }
     }
 
     private static void mostrarMenuPrincipal() {
         System.out.println("\n--- Menú Principal ---");
-        System.out.println("1. Inscribir nuevo equipo");
-        System.out.println("2. Registrar resultado de partido");
-        System.out.println("3. Ver tabla de posiciones");
-        System.out.println("4. Salir");
+        System.out.println("1. Crear nuevo campeonato");
+        System.out.println("2. Inscribir equipo en campeonato");
+        System.out.println("3. Registrar resultado de partido");
+        System.out.println("4. Ver tabla de posiciones");
+        System.out.println("5. Salir");
         System.out.print("Seleccione una opción: ");
     }
 
-    private static void inscribirNuevoEquipo() {
-        inscribirEquipo();
+    private static void crearCampeonato() {
+        System.out.println("Ingrese el nombre del nuevo campeonato:");
+        String nombreCampeonato = scanner.nextLine();
+        Campeonato campeonato = admin.crearCampeonato(nombreCampeonato, new Date(), new Date(), TipoCampeonato.LIGA);
+        campeonatos.add(campeonato);
+        System.out.println("Campeonato '" + nombreCampeonato + "' creado exitosamente.");
     }
 
     private static void inscribirEquipo() {
-        System.out.println("Ingrese el nombre del Equipo:");
+        if (campeonatos.isEmpty()) {
+            System.out.println("No hay campeonatos creados. Por favor, cree un campeonato primero.");
+            return;
+        }
+
+        System.out.println("Seleccione el campeonato para inscribir el equipo:");
+        for (int i = 0; i < campeonatos.size(); i++) {
+            System.out.println((i + 1) + ". " + campeonatos.get(i).getNombre());
+        }
+        int indexCampeonato = scanner.nextInt() - 1;
+        scanner.nextLine(); // Consumir el salto de línea
+
+        Campeonato campeonatoSeleccionado = campeonatos.get(indexCampeonato);
+
+        System.out.println("Ingrese el nombre del equipo:");
         String nombreEquipo = scanner.nextLine();
         Equipo equipo = new Equipo(nombreEquipo);
 
         for (int j = 1; j <= 11; j++) {
-            System.out.println("Ingrese el nombre del Jugador " + j + " del " + nombreEquipo + ":");
+            System.out.println("Ingrese el nombre del Jugador " + j + ":");
             String nombreJugador = scanner.nextLine();
-            System.out.println("Ingrese el numero del Jugador " + nombreJugador + ":");
+            System.out.println("Ingrese el número del Jugador " + nombreJugador + ":");
             int numeroJugador = scanner.nextInt();
-            scanner.nextLine();
-            System.out.println("Ingrese la posicion del Jugador " + nombreJugador + " (PORTERO, DEFENSA, CENTROCAMPISTA, DELANTERO):");
+            scanner.nextLine(); // Consumir el salto de línea
+            System.out.println("Ingrese la posición del Jugador " + nombreJugador + " (PORTERO, DEFENSA, CENTROCAMPISTA, DELANTERO):");
             PosicionJugador posicion = PosicionJugador.valueOf(scanner.nextLine().toUpperCase());
 
             Jugador jugador = new Jugador(nombreJugador, numeroJugador, posicion);
             equipo.añadirJugador(jugador);
         }
 
-        EquipoInscrito equipoInscrito = new EquipoInscrito(equipo, campeonato);
+        EquipoInscrito equipoInscrito = new EquipoInscrito(equipo, campeonatoSeleccionado);
         equipoInscrito.realizarInscripcion();
-        campeonato.getEquiposInscritos().add(equipoInscrito);
+        campeonatoSeleccionado.agregarEquipoInscrito(equipoInscrito);
+        System.out.println("Equipo '" + nombreEquipo + "' inscrito exitosamente en el campeonato '" + campeonatoSeleccionado.getNombre() + "'.");
     }
 
     private static void registrarResultadoPartido() {
-        List<EquipoInscrito> equipos = campeonato.getEquiposInscritos();
-        if (equipos.size() < 2) {
+        if (campeonatos.isEmpty()) {
+            System.out.println("No hay campeonatos creados. Por favor, cree un campeonato primero.");
+            return;
+        }
+
+        System.out.println("Seleccione el campeonato para registrar el resultado:");
+        for (int i = 0; i < campeonatos.size(); i++) {
+            System.out.println((i + 1) + ". " + campeonatos.get(i).getNombre());
+        }
+        int indexCampeonato = scanner.nextInt() - 1;
+        scanner.nextLine(); // Consumir el salto de línea
+
+        Campeonato campeonatoSeleccionado = campeonatos.get(indexCampeonato);
+
+        if (campeonatoSeleccionado.getEquiposInscritos().size() < 2) {
             System.out.println("Se necesitan al menos dos equipos para registrar un partido.");
             return;
         }
 
-        System.out.println("Seleccione el equipo local:");
-        for (int i = 0; i < equipos.size(); i++) {
-            System.out.println((i + 1) + ". " + equipos.get(i).getEquipo().getNombre());
+        System.out.println("Equipos disponibles:");
+        for (int i = 0; i < campeonatoSeleccionado.getEquiposInscritos().size(); i++) {
+            System.out.println((i + 1) + ". " + campeonatoSeleccionado.getEquiposInscritos().get(i).getEquipo().getNombre());
         }
+
+        System.out.println("Seleccione el número del equipo local:");
         int indexLocal = scanner.nextInt() - 1;
-        scanner.nextLine();
-
-        System.out.println("Seleccione el equipo visitante:");
-        for (int i = 0; i < equipos.size(); i++) {
-            if (i != indexLocal) {
-                System.out.println((i + 1) + ". " + equipos.get(i).getEquipo().getNombre());
-            }
-        }
+        System.out.println("Seleccione el número del equipo visitante:");
         int indexVisitante = scanner.nextInt() - 1;
-        scanner.nextLine();
+        scanner.nextLine(); // Consumir el salto de línea
 
-        EquipoInscrito equipoLocal = equipos.get(indexLocal);
-        EquipoInscrito equipoVisitante = equipos.get(indexVisitante);
-        Partido partido = new Partido(equipoLocal, equipoVisitante);
+        EquipoInscrito equipoLocal = campeonatoSeleccionado.getEquiposInscritos().get(indexLocal);
+        EquipoInscrito equipoVisitante = campeonatoSeleccionado.getEquiposInscritos().get(indexVisitante);
 
         System.out.println("Ingrese los goles del equipo local (" + equipoLocal.getEquipo().getNombre() + "):");
         int golesLocal = scanner.nextInt();
         System.out.println("Ingrese los goles del equipo visitante (" + equipoVisitante.getEquipo().getNombre() + "):");
         int golesVisitante = scanner.nextInt();
-        scanner.nextLine();
+        scanner.nextLine(); // Consumir el salto de línea
 
+        Partido partido = new Partido(equipoLocal, equipoVisitante);
         partido.registrarResultado(golesLocal, golesVisitante);
-        campeonato.getPartidos().add(partido);
-        campeonato.getTablaPosiciones().actualizarTabla(partido);
+        campeonatoSeleccionado.agregarPartido(partido);
+
+        System.out.println("Resultado registrado: " + equipoLocal.getEquipo().getNombre() + " " + golesLocal +
+                " - " + golesVisitante + " " + equipoVisitante.getEquipo().getNombre());
     }
 
     private static void verTablaPosiciones() {
-        TablaPosiciones tabla = campeonato.getTablaPosiciones();
-        List<Estadistica> estadisticas = tabla.getEstadisticas();
+        if (campeonatos.isEmpty()) {
+            System.out.println("No hay campeonatos creados. Por favor, cree un campeonato primero.");
+            return;
+        }
 
-        System.out.println("\n--- Tabla de Posiciones ---");
-        System.out.println("Posición | Equipo | PJ | PG | PE | PP | GF | GC | DG | Puntos");
+        System.out.println("Seleccione el campeonato para ver la tabla de posiciones:");
+        for (int i = 0; i < campeonatos.size(); i++) {
+            System.out.println((i + 1) + ". " + campeonatos.get(i).getNombre());
+        }
+        int indexCampeonato = scanner.nextInt() - 1;
+        scanner.nextLine(); // Consumir el salto de línea
 
-        for (int i = 0; i < estadisticas.size(); i++) {
-            Estadistica est = estadisticas.get(i);
+        Campeonato campeonatoSeleccionado = campeonatos.get(indexCampeonato);
+
+        System.out.println("\nTabla de Posiciones - " + campeonatoSeleccionado.getNombre());
+        System.out.println("Pos | Equipo       | PJ | PG | PE | PP | GF | GC | DG | Pts");
+        System.out.println("------------------------------------------------------------");
+
+        TablaPosiciones tabla = campeonatoSeleccionado.getTablaPosiciones();
+        for (Estadistica est : tabla.getEstadisticas()) {
             EquipoInscrito equipo = est.getEquipoInscrito();
-            int diferenciaGoles = est.getGolesFavor() - est.getGolesContra();
-
-            System.out.printf("%-8d | %-6s | %-2d | %-2d | %-2d | %-2d | %-2d | %-2d | %-2d | %-6d\n",
-                    (i + 1),
+            System.out.printf("%-3d | %-12s | %-2d | %-2d | %-2d | %-2d | %-2d | %-2d | %-2d | %-3d\n",
+                    tabla.obtenerPosicion(equipo),
                     equipo.getEquipo().getNombre(),
                     est.getPartidosJugados(),
                     est.getPartidosGanados(),
@@ -158,7 +188,7 @@ public class FutbolLigaSystem {
                     est.getPartidosPerdidos(),
                     est.getGolesFavor(),
                     est.getGolesContra(),
-                    diferenciaGoles,
+                    est.getGolesFavor() - est.getGolesContra(),
                     est.getPuntos());
         }
     }
